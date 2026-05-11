@@ -1,0 +1,131 @@
+rules_version = '2';
+
+service cloud.firestore {
+  match /databases/{database}/documents {
+    // DENY ALL BY DEFAULT
+    match /{document=**} {
+      allow read, write: if false;
+    }
+
+    // Helper: Is Valid ID
+    function isValidId(id) {
+      return id is string && id.size() <= 128 && id.matches('^[a-zA-Z0-9_\\-]+$');
+    }
+
+    // Helper: Is Signed In
+    function isSignedIn() {
+      return request.auth != null;
+    }
+
+    // Helper: Is Admin (Explicit lookup)
+    function isAdmin() {
+      return isSignedIn() && 
+        request.auth.token.email == "udaywelapure@gmail.com" && 
+        request.auth.token.email_verified == true;
+    }
+
+    // Admin Collection: Only admins can manage admins
+    match /admins/{adminId} {
+      allow read: if isSignedIn();
+      allow write: if isAdmin();
+    }
+
+    // Members Collection
+    match /members/{memberId} {
+      allow read: if isAdmin();
+      allow create: if isValidMember(request.resource.data);
+      allow update: if isAdmin();
+      allow delete: if isAdmin();
+      
+      // Validation helper for creating/updating members
+      function isValidMember(data) {
+        return data.name is string && data.name.size() <= 100 &&
+               data.email is string && data.email.size() <= 100 &&
+               data.plan in ['Standard Protocol', 'Strategic cycle', 'Architect Tier', 'Titan Continuum'] &&
+               data.paymentStatus in ['Paid', 'Half Paid', 'Verified Paid', 'Awaiting Payment'] &&
+               (data.get('razorpayPaymentId', '') == '' || data.razorpayPaymentId is string) &&
+               (data.get('authId', '') == '' || data.authId is string) &&
+               (data.get('paidAmount', 0) is number) &&
+               (data.get('totalAmount', 0) is number) &&
+               data.joinDate is string &&
+               data.expiryDate is string;
+      }
+    }
+
+    // Trainers Collection
+    match /trainers/{trainerId} {
+      allow read: if true; // Publicly viewable
+      allow write: if isAdmin();
+    }
+
+    // Appointments Collection
+    match /appointments/{appointmentId} {
+       allow read: if isAdmin() || (isSignedIn() && resource.data.memberId == request.auth.uid);
+       allow create: if isValidAppointment(request.resource.data);
+       allow update: if isAdmin();
+       allow delete: if isAdmin();
+
+       function isValidAppointment(data) {
+         return data.memberName is string && data.memberName.size() <= 100 &&
+                data.memberId is string && data.memberId.size() <= 100 &&
+                data.trainerName is string &&
+                data.trainerId is string &&
+                data.date is string &&
+                data.status == 'Pending' &&
+                data.type in ['training', 'sauna'];
+       }
+    }
+
+    // Payments Collection
+    match /payments/{paymentId} {
+      allow read: if isAdmin() || (isSignedIn() && resource.data.memberId == request.auth.uid);
+      allow create: if isValidPayment(request.resource.data);
+      allow update: if isAdmin();
+      allow delete: if isAdmin();
+
+      function isValidPayment(data) {
+        return data.memberName is string && 
+               (data.amount is string || data.amount is number) &&
+               data.plan in ['Standard Protocol', 'Strategic cycle', 'Architect Tier', 'Titan Continuum'] &&
+               data.status in ['Paid', 'Half Paid', 'Completed'] &&
+               (data.get('razorpayPaymentId', '') == '' || data.razorpayPaymentId is string) &&
+               (data.get('paymentType', '') == '' || data.paymentType in ['Full Payment', 'Half Payment']) &&
+               (data.get('totalAmount', 0) is number) &&
+               (data.get('paidAmount', 0) is number) &&
+               (data.get('remainingAmount', 0) is number);
+      }
+    }
+
+    // Messages Collection
+    match /messages/{messageId} {
+      // Anyone can submit a message (contact form)
+      allow create: if true;
+      allow read, update, delete: if isAdmin();
+    }
+
+    // Notifications Collection
+    match /notifications/{notificationId} {
+      allow read: if true; // Publicly viewable broadcast
+      allow write: if isAdmin();
+    }
+
+    // Invoices Collection
+    match /invoices/{invoiceId} {
+      allow read: if isAdmin() || (isSignedIn() && resource.data.customerEmail == request.auth.token.email);
+      allow create: if isValidInvoice(request.resource.data);
+      allow update, delete: if isAdmin();
+
+      function isValidInvoice(data) {
+        return data.invoiceId is string &&
+               data.customerName is string &&
+               data.customerEmail is string &&
+               data.planName is string &&
+               data.amountPaid is number &&
+               data.status is string &&
+               data.startDate is string &&
+               data.endDate is string &&
+               data.createdAt is string;
+      }
+    }
+  }
+}

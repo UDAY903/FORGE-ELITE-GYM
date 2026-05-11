@@ -1,0 +1,123 @@
+{
+  "entities": {
+    "Member": {
+      "title": "Member",
+      "description": "A gym member profile",
+      "type": "object",
+      "properties": {
+        "name": { "type": "string" },
+        "email": { "type": "string", "format": "email" },
+        "phone": { "type": "string" },
+        "plan": { "type": "string", "enum": ["Basic", "Pro", "Elite"] },
+        "joinDate": { "type": "string", "format": "date-time" },
+        "expiryDate": { "type": "string", "format": "date-time" },
+        "paymentStatus": { "type": "string", "enum": ["Paid", "Half Paid"] },
+        "paidAmount": { "type": "number" },
+        "totalAmount": { "type": "number" }
+      },
+      "required": ["name", "email", "plan", "joinDate", "expiryDate", "paymentStatus"]
+    },
+    "Trainer": {
+      "title": "Trainer",
+      "description": "Gym trainer profile",
+      "type": "object",
+      "properties": {
+        "name": { "type": "string" },
+        "specialization": { "type": "string" },
+        "schedule": { "type": "string" },
+        "contact": { "type": "string" },
+        "profileImage": { "type": "string" }
+      },
+      "required": ["name", "specialization", "schedule", "contact"]
+    },
+    "Appointment": {
+      "title": "Appointment",
+      "description": "A training session booking",
+      "type": "object",
+      "properties": {
+        "memberId": { "type": "string" },
+        "memberName": { "type": "string" },
+        "trainerId": { "type": "string" },
+        "trainerName": { "type": "string" },
+        "date": { "type": "string", "format": "date-time" },
+        "status": { "type": "string", "enum": ["Pending", "Accepted", "Rejected"] }
+      },
+      "required": ["memberId", "memberName", "trainerId", "trainerName", "date", "status"]
+    },
+    "Payment": {
+      "title": "Payment",
+      "description": "Membership payment record",
+      "type": "object",
+      "properties": {
+        "memberId": { "type": "string" },
+        "memberName": { "type": "string" },
+        "amount": { "type": "number" },
+        "totalAmount": { "type": "number" },
+        "paidAmount": { "type": "number" },
+        "remainingAmount": { "type": "number" },
+        "date": { "type": "string", "format": "date-time" },
+        "nextDueDate": { "type": "string", "format": "date" },
+        "status": { "type": "string", "enum": ["Paid", "Half Paid", "Pending", "Overdue"] },
+        "paymentType": { "type": "string", "enum": ["Full Payment", "Half Payment"] },
+        "plan": { "type": "string" },
+        "razorpayPaymentId": { "type": "string" }
+      },
+      "required": ["memberId", "memberName", "amount", "date", "status", "plan"]
+    },
+    "Message": {
+      "title": "Message",
+      "description": "Contact form submission",
+      "type": "object",
+      "properties": {
+        "name": { "type": "string" },
+        "email": { "type": "string", "format": "email" },
+        "subject": { "type": "string" },
+        "message": { "type": "string" },
+        "date": { "type": "string", "format": "date-time" },
+        "status": { "type": "string", "enum": ["New", "Read", "Replied"] }
+      },
+      "required": ["name", "email", "message", "date", "status"]
+    },
+    "Notification": {
+        "title": "Notification",
+        "description": "System-wide notification",
+        "type": "object",
+        "properties": {
+            "title": { "type": "string" },
+            "content": { "type": "string" },
+            "date": { "type": "string", "format": "date-time" },
+            "type": { "type": "string", "enum": ["Info", "Alert", "Promo"] },
+            "active": { "type": "boolean" }
+        },
+        "required": ["title", "content", "date", "type", "active"]
+    },
+    "Invoice": {
+      "title": "Invoice",
+      "description": "Professional invoice record",
+      "type": "object",
+      "properties": {
+        "invoiceId": { "type": "string" },
+        "customerName": { "type": "string" },
+        "customerEmail": { "type": "string" },
+        "planName": { "type": "string" },
+        "amountPaid": { "type": "number" },
+        "remainingAmount": { "type": "number" },
+        "nextDueDate": { "type": "string" },
+        "status": { "type": "string" },
+        "startDate": { "type": "string" },
+        "endDate": { "type": "string" },
+        "createdAt": { "type": "string", "format": "date-time" }
+      },
+      "required": ["invoiceId", "customerName", "customerEmail", "planName", "amountPaid", "status", "startDate", "endDate", "createdAt"]
+    }
+  },
+  "firestore": {
+    "members": { "schema": "Member", "description": "Collection of gym members" },
+    "trainers": { "schema": "Trainer", "description": "Collection of trainers" },
+    "appointments": { "schema": "Appointment", "description": "Membership bookings" },
+    "payments": { "schema": "Payment", "description": "Payment history" },
+    "messages": { "schema": "Message", "description": "User inquiries" },
+    "notifications": { "schema": "Notification", "description": "Broadcast alerts" },
+    "invoices": { "schema": "Invoice", "description": "Professional billing records" }
+  }
+}
